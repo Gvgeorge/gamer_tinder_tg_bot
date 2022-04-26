@@ -2,6 +2,7 @@ import telepot
 import os
 import time
 from loguru import logger
+from django.conf import settings
 from telepot.loop import MessageLoop
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardRemove, Message
@@ -13,7 +14,7 @@ from .storage import StateStorage
 from . import msgs
 
 
-TOKEN = os.getenv('TG_API_KEY')
+TOKEN = settings.TELEGRAM_TOKEN
 
 
 class GamerBot(ChatHandler):
@@ -262,3 +263,21 @@ def main():
 
     while True:
         time.sleep(10)
+
+
+@logger.catch
+def main():
+    bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
+        per_chat_id(), create_open, GamerBot, timeout=1200),
+    ])
+    bot.setWebhook(f'https://authdemka.ru/bot/{token}/')
+
+    MessageLoop(bot).run_as_thread()
+    print('Listening ...')
+
+    while True:
+        time.sleep(10)
+
+import telepot
+bot_token = 'BOT_TOKEN'
+bot = telepot.Bot(bot_token)
