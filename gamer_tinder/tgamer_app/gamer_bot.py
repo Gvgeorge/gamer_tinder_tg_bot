@@ -3,7 +3,7 @@ import os
 import time
 from loguru import logger
 from django.conf import settings
-from telepot.loop import MessageLoop
+from telepot.loop import MessageLoop, OrderedWebhook
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardRemove, Message
 from telepot.delegate import per_chat_id, create_open, pave_event_space
@@ -253,16 +253,16 @@ class GamerBot(ChatHandler):
         self.close()
 
 
-# @logger.catch
-# def main():
-#     bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
-#         per_chat_id(), create_open, GamerBot, timeout=1200),
-#     ])
-#     MessageLoop(bot).run_as_thread()
-#     print('Listening ...')
+@logger.catch
+def main_polling():
+    bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
+        per_chat_id(), create_open, GamerBot, timeout=1200),
+    ])
+    MessageLoop(bot).run_as_thread()
+    print('Listening ...')
 
-#     while True:
-#         time.sleep(10)
+    while True:
+        time.sleep(10)
 
 
 @logger.catch
@@ -270,14 +270,10 @@ def main():
     bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
         per_chat_id(), create_open, GamerBot, timeout=1200),
     ])
-    bot.setWebhook(f'https://authdemka.ru/bot/{token}/')
+    bot.setWebhook(f'https://authdemka.ru/bot/{TOKEN}/')
 
-    MessageLoop(bot).run_as_thread()
+    OrderedWebhook(bot).run_as_thread()
     print('Listening ...')
 
     while True:
         time.sleep(10)
-
-import telepot
-bot_token = 'BOT_TOKEN'
-bot = telepot.Bot(bot_token)
