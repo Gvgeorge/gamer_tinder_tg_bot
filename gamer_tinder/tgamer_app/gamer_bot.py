@@ -220,6 +220,3 @@ def main():
 
     while 1:
         time.sleep(10)
-
-
-main()
