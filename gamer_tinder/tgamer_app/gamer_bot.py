@@ -253,16 +253,16 @@ class GamerBot(ChatHandler):
         self.close()
 
 
-@logger.catch
-def main():
-    bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
-        per_chat_id(), create_open, GamerBot, timeout=1200),
-    ])
-    MessageLoop(bot).run_as_thread()
-    print('Listening ...')
+# @logger.catch
+# def main():
+#     bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
+#         per_chat_id(), create_open, GamerBot, timeout=1200),
+#     ])
+#     MessageLoop(bot).run_as_thread()
+#     print('Listening ...')
 
-    while True:
-        time.sleep(10)
+#     while True:
+#         time.sleep(10)
 
 
 @logger.catch
