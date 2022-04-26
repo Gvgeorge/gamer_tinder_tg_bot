@@ -21,9 +21,14 @@ def build_keyboard(buttons: list, per_line: int) -> list:
 
 
 # markup for registration start keyboard
-reg_button = InlineKeyboardButton(text='registration',
-                                  callback_data='registration')
-reg_markup = InlineKeyboardMarkup(inline_keyboard=[[reg_button]])
+reg_button = KeyboardButton(text='/registration')
+reg_markup = ReplyKeyboardMarkup(keyboard=[[reg_button]])
+
+# inline markup for registration start keyboard
+
+inline_reg_button = InlineKeyboardButton(text='registration',
+                                         callback_data='registration')
+inline_reg_markup = InlineKeyboardMarkup(inline_keyboard=[[inline_reg_button]])
 
 # markup for selecting favourite game keyboard
 games = [(game.id, game.title) for game in Game.objects.all()]

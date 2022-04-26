@@ -18,6 +18,7 @@ class Game(models.Model):
 
 class Player(models.Model):
     class RegistrationSteps(models.IntegerChoices):
+        '''Сохраняю состояние процесса регистрации'''
         NEW_PLAYER = 0
         STEAM_NAME = 1
         ABOUT = 2
