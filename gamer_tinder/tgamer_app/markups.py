@@ -30,3 +30,14 @@ games = [(game.id, game.title) for game in Game.objects.all()]
 games_keyboard = build_keyboard([KeyboardButton(text=f'{game[0]} {game[1]}')
                                 for game in games], 3)
 games_markup = ReplyKeyboardMarkup(keyboard=games_keyboard)
+
+
+teammate_markup = ReplyKeyboardMarkup(
+    keyboard=[[KeyboardButton(text='/next'), KeyboardButton(text='/invite')]]
+                                      )
+inline_teammate_markup = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='/next', callback_data='next'),
+         InlineKeyboardButton(text='/invite', callback_data='invite')]
+        ]
+            )

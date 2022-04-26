@@ -52,6 +52,15 @@ class Player(models.Model):
             su_status = self.RegistrationSteps.DONE
         self.sign_up = su_status
 
+    def get_possible_teammates(self, game: Game):
+        '''
+        returns a query of players with search enabled and
+        same prefered game
+        '''
+        qs = Player.objects.filter(search_enabled=True).filter(
+            prefered_game=game).exclude(pk=self.tg_id)
+        return qs
+
     def save(self, *args, **kwargs):
         self.update_sign_up_status()
         return super().save(*args, **kwargs)

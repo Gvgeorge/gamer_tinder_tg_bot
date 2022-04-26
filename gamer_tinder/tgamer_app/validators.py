@@ -1,4 +1,3 @@
-from .models import Player
 from django.conf import settings
 
 
