@@ -254,7 +254,7 @@ class GamerBot(ChatHandler):
 
 
 @logger.catch
-def main_polling():
+def main():
     bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
         per_chat_id(), create_open, GamerBot, timeout=1200),
     ])
@@ -264,16 +264,3 @@ def main_polling():
     while True:
         time.sleep(10)
 
-
-@logger.catch
-def main():
-    bot = telepot.DelegatorBot(TOKEN, [pave_event_space()(
-        per_chat_id(), create_open, GamerBot, timeout=1200),
-    ])
-    bot.setWebhook(f'https://authdemka.ru/bot/{TOKEN}/')
-
-    OrderedWebhook(bot).run_as_thread()
-    print('Listening ...')
-
-    while True:
-        time.sleep(10)
