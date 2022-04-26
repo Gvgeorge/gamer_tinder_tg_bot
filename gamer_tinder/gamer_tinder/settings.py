@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
-
+from loguru import logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -130,3 +130,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = 'media/'
 
 STEAM_NAME_MAX_LEN = 32
+
+logger.add('gamer_tinder.log',
+           format='{time}, {level}, {message}',
+           level='INFO',
+           enqueue=True, rotation='1 week', compression='zip')

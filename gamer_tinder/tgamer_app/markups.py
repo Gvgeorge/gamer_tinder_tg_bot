@@ -3,7 +3,7 @@ from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, \
 from .models import Game
 
 
-def build_keyboard(buttons: list, per_line: int):
+def build_keyboard(buttons: list, per_line: int) -> list:
     '''
     Given a list of buttons returns a list of lists
     per_line buttons in each list
@@ -31,7 +31,7 @@ games_keyboard = build_keyboard([KeyboardButton(text=f'{game[0]} {game[1]}')
                                 for game in games], 3)
 games_markup = ReplyKeyboardMarkup(keyboard=games_keyboard)
 
-
+# markups for the search function
 teammate_markup = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text='/next'), KeyboardButton(text='/invite')]]
                                       )

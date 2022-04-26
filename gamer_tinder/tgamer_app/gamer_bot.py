@@ -1,6 +1,7 @@
 import telepot
 import os
 import time
+from loguru import logger
 from telepot.loop import MessageLoop
 from telepot.helper import DefaultRouterMixin
 from telepot.namedtuple import ReplyKeyboardRemove, Message
@@ -8,7 +9,7 @@ from .models import Game, Player
 from .validators import validate_steam_name
 from .markups import reg_markup, games_markup, teammate_markup
 from .storage import StateStorage
-
+from . import msgs
 
 TOKEN = os.getenv('TG_API_KEY')
 
@@ -36,7 +37,7 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
         content_type, chat_type, chat_id = telepot.glance(msg)
         if content_type != 'text':
             return self.sendMessage(
-                chat_id, 'Данный бот принимает только текстовые сообщения')
+                chat_id, msgs.ACCEPTS_MESSAGES_ONLY)
         msg_text = msg['text']
         # наверное можно как-то сделать чтобы не запрашивать бд
 
@@ -45,8 +46,7 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
         if player_is_new:
             return self.sendMessage(
                 player.tg_id,
-                'Для того чтобы использовать этот бот ' +
-                'нужно зарегистрироваться нажмите на кнопку ниже.',
+                msgs.PLEASE_REGISTER,
                 reply_markup=reg_markup)
 
         if player.sign_up != player.RegistrationSteps.DONE:
@@ -83,28 +83,24 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
         return self.send_next_registration_message(player)
 
     def parse_game_setting_msg(self, player: Player, msg_text: str):
-        game_id = int(msg_text.split()[0])
         try:
+            game_id = int(msg_text.split()[0])
             game = Game.objects.get(pk=game_id)
             return game
 
-        except Game.DoesNotExist:
-            self.sendMessage(
-                player.tg_id,
-                'выберите пожалуйста игру из списка ниже: ',
-                reply_markup=games_markup)
+        except (Game.DoesNotExist, ValueError):
+            logger.exception('Error while parcing game name', backtrace=False)
             return None
 
     def send_next_registration_message(self, player: Player) -> str:
         route = {
          player.RegistrationSteps.STEAM_NAME: (
-             'Введите, пожалуйста, свой ник в стиме', None),
-         player.RegistrationSteps.ABOUT: ('Расскажите о себе.', None),
+             msgs.ENTER_STEAM_NAME, None),
+         player.RegistrationSteps.ABOUT: (msgs.ENTER_ABOUT, None),
          player.RegistrationSteps.PREFERED_GAME: (
-             'Спасибо, теперь, пожалуйста, ' +
-             'выберите любимую игру из списка ниже: ', games_markup),
+             msgs.ENTER_PREF_GAME, games_markup),
          player.RegistrationSteps.DONE: (
-             'Регистрация успешно завершена!', ReplyKeyboardRemove())}
+             msgs.REG_SUCCESS, ReplyKeyboardRemove())}
         msg_text = route[player.sign_up][0]
         markup = route[player.sign_up][1]
         return self.sendMessage(player.tg_id, msg_text, reply_markup=markup)
@@ -124,21 +120,21 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
     def set_enable_search(self, player: Player, msg) -> None:
         player.search_enabled = True
         player.save(update_fields=['search_enabled'])
-        self.sendMessage(player.tg_id, 'Поиск включен.')
+        self.sendMessage(player.tg_id, msgs.SEARCH_ENABLED)
 
     def set_disable_search(self, player: Player, msg) -> None:
         player.search_enabled = False
         player.save(update_fields=['search_enabled'])
-        self.sendMessage(player.tg_id, 'Поиск выключен.')
+        self.sendMessage(player.tg_id, msgs.SEARCH_DISABLED)
 
     def on_default(self, player, msg_text):
         self.sendMessage(
-            player.tg_id, 'Простите, я вас не понял. Список комманд:' +
+            player.tg_id, msgs.NOT_UNDERSTAND +
             f'\n{self.available_commands}')
 
     def on_commands(self, player, msg_text):
         self.sendMessage(
-            player.tg_id, f'Список комманд: \n{self.available_commands}')
+            player.tg_id, f'{msgs.COMMAND_LIST}\n{self.available_commands}')
 
     def on_callback_query(self, msg):
         query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
@@ -170,37 +166,31 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
         try:
             username = msg['from']['username']
         except KeyError:
-            return self.sendMessage(
-                player.tg_id,
-                'Для использования этой комманды нужно в настройках профиля ' +
-                'указать username')
+            return self.sendMessage(player.tg_id, msgs.SHOW_USERNAME)
         return username
 
     def find_friends(self, player: Player, msg: Message):
         if not self._state.get_search_status(player):
             self.check_username_set(player, msg)
-            self.sendMessage(player.tg_id, 'Выберите игру',
+            self.sendMessage(player.tg_id, msgs.ENTER_GAME,
                              reply_markup=games_markup)
             self._state.set_search_status(player, True)
         else:
             self._state.set_search_status(player, False)
             game = self._state.get_current_game(player)
-
+            if game is None:
+                return self.find_friends(player, msg)
             teammates = self._state.update_possible_teammates(
                 player, game)
             if not teammates:
-                return self.sendMessage(
-                    player.tg_id,
-                    'Ни одного игрока, соответствующего вашим предпочтениям' +
-                    'не найдено.')
+                return self.sendMessage(player.tg_id, msgs.NO_PLAYERS_FOUND)
             return self.next_teammate(player, msg)
 
     def next_teammate(self, player: Player, msg: Message):
         try:
             possible_teammate = self._state.get_next_teammate(player)
         except IndexError:
-            return self.sendMessage(
-                player.tg_id, 'Других игроков по вашему запросу не найдено.')
+            return self.sendMessage(player.tg_id, msgs.NO_MORE_PLAYERS_FOUND)
         possible_teammate_card = self.prepare_player_card(possible_teammate)
         return self.sendMessage(player.tg_id,
                                 possible_teammate_card,
@@ -214,7 +204,7 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
             f'Пользователю {username} понравилась ваша карточка по игре.' +
             ' Напиши ему!')
         return self.sendMessage(
-            player.tg_id, 
+            player.tg_id,
             f'Сообщение {teammate.steam_name} успешно отправлено!')
 
     def prepare_player_card(self, player: Player) -> str:
@@ -224,7 +214,12 @@ class GamerBot(telepot.Bot, DefaultRouterMixin):
         return card
 
 
-MessageLoop(GamerBot(TOKEN)).run_as_thread()
+@logger.catch
+def main():
+    MessageLoop(GamerBot(TOKEN)).run_as_thread()
 
-while 1:
-    time.sleep(10)
+    while 1:
+        time.sleep(10)
+
+
+main()
