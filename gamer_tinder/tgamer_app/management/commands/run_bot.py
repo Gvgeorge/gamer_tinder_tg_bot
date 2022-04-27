@@ -6,4 +6,4 @@ class Command(BaseCommand):
     help = 'Runs the bot!'
 
     def handle(self, *args, **options):
-        main()
+        run_as_polling()

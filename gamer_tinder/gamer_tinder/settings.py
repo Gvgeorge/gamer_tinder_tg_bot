@@ -28,7 +28,7 @@ TELEGRAM_TOKEN = os.getenv('TG_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://authdemka.ru']
+ALLOWED_HOSTS = ['authdemka.ru', 'https://authdemka.ru']
 
 
 # Application definition
@@ -132,7 +132,7 @@ MEDIA_URL = 'media/'
 
 STEAM_NAME_MAX_LEN = 32
 
-logger.add('gamer_tinder.log',
+logger.add(os.path.join(BASE_DIR,'gamer_tinder.log'),
            format='{time}, {level}, {message}',
            level='INFO',
            enqueue=True, rotation='1 week', compression='zip')
