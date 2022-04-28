@@ -21,7 +21,6 @@ class GamerBot(ChatHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.text_route = {'/commands': self.on_commands,
-                           '/selectGame': self.set_prefered_game,
                            '/change_steam_name': self.reset_steam_name,
                            '/change_about': self.reset_about,
                            '/change_game': self.reset_prefered_game,
